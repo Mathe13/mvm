@@ -25,7 +25,6 @@ typedef struct global{
 vector <global> tabela_global;
 
 typedef struct externa{
-    int addr;
     string nome;
 }externa;
 vector <externa> tabela_extern;
@@ -36,6 +35,8 @@ int rastreiaSimbolo(string nome_simbolo);
 int rastreiaLabel(string nome_label);
 void passo1(string fileName);
 void passo2(string fileName,string targetName);
+int rastreiaGlobal(string nome_global);
+int rastreiaExterno(string nome_global);
 
 int main(int argc, char* argv[]){
     string arquivoSaida="saida";
@@ -47,8 +48,17 @@ int main(int argc, char* argv[]){
         arquivoSaida=argv[2];
     }
     passo1(argv[1]);
+    cout<<"variaveis"<<endl;
     for(int i=0;i<tabela_simbolos.size();i++){
         cout<<"addr:"<<tabela_simbolos[i].addr<<" nome:"<<tabela_simbolos[i].nome<<endl;
+    }
+    cout<<"externas"<<endl;
+    for(int i=0;i<tabela_extern.size();i++){
+        cout<<"nome:"<<tabela_extern[i].nome<<endl;
+    }
+    cout<<"globais"<<endl;
+    for(int i=0;i<tabela_global.size();i++){
+        cout<<"nome:"<<tabela_global[i].nome<<endl;
     }
     passo2(argv[1],arquivoSaida);
     return 0;
@@ -93,6 +103,25 @@ int rastreiaLabel(string nome_label){
     return -1;
 }
 
+int rastreiaGlobal(string nome_global){
+    for(int i=0;i<tabela_global.size();i++){
+        if(tabela_global[i].nome==nome_global){
+            return i;
+        }
+    }
+    return -1;
+}
+
+int rastreiaExterno(string nome_extern){
+    for(int i=0;i<tabela_extern.size();i++){
+        if(tabela_extern[i].nome==nome_extern){
+            return i;
+        }
+    }
+    return -1;
+}
+
+
 void declaraLabel(vector <string> comando,int nLinha){
     // cout<<<<endl;
     string labelName;
@@ -109,7 +138,50 @@ void declaraLabel(vector <string> comando,int nLinha){
         cout<<"adicionando label:"<<labelName<<endl;
     }
 }
-
+void declaraExtern(vector <string> comando,externa tmp){
+    if(comando[1]=="EXTERN"){
+        if(rastreiaExterno(comando[0])==-1){
+            if(stoi(comando[2])>1){
+                if(comando[0].find("[")!=-1){
+                    cout<<"ERROR: variavel com nome invalido:"<<comando[0]<<endl;
+                    return;
+                }
+                for(int i =0;i<stoi(comando[2]);i++){
+                    tmp.nome=comando[0]+"["+to_string(i)+"]";
+                    tabela_extern.push_back(tmp);
+                }
+            }else{
+                tmp.nome=comando[0];
+                tabela_extern.push_back(tmp);
+            }
+        }else{
+            cout<<"ERRO: variavel "<<comando[0]<<" declarada multiplas vezes"<<endl;
+            return;
+        }
+    }
+}
+void declaraGlobal(vector <string> comando,global tmp){
+    if(comando[1]=="GLOBAL"){
+        if(rastreiaGlobal(comando[0])==-1){
+            if(stoi(comando[2])>1){
+                if(comando[0].find("[")!=-1){
+                    cout<<"ERROR: variavel com nome invalido:"<<comando[0]<<endl;
+                    return;
+                }
+                for(int i =0;i<stoi(comando[2]);i++){
+                    tmp.nome=comando[0]+"["+to_string(i)+"]";
+                    tabela_global.push_back(tmp);
+                }
+            }else{
+                tmp.nome=comando[0];
+                tabela_global.push_back(tmp);
+            }
+        }else{
+            cout<<"ERRO: variavel "<<comando[0]<<" declarada multiplas vezes"<<endl;
+            return;
+        }
+    }
+}
 void declaraVariavel(vector <string> comando,simbolo tmp,int pos){
     if(comando[1]=="space"){
         if(rastreiaSimbolo(comando[0])==-1){
@@ -139,6 +211,7 @@ void declaraVariavel(vector <string> comando,simbolo tmp,int pos){
 void passo1(string fileName){
     string linha;
     int pos = 0,i=0;
+    // int posEx=0,posG=0; //extern e global
     int nLinha=0;//usado pra labels;
     simbolo tmp;
     vector <string> comando;
@@ -148,13 +221,24 @@ void passo1(string fileName){
         getline(leitura,linha);
         comando = separaLinha(linha);
         if(comando.size()==3){
-            declaraVariavel(comando, tmp, pos);
+            if(comando[1]=="GLOBAL"){
+                global tmp;
+                declaraGlobal(comando,tmp);
+            }else if(comando[1]=="EXTERN"){
+                externa tmp;
+                declaraExtern(comando,tmp);
+            }else if(comando[1]=="space"){
+                declaraVariavel(comando, tmp, pos);
+            }
         }else if((comando.size()==1) &&
             (comando[0].substr(comando[0].size()-1,comando[0].size())==":")){
             declaraLabel(comando,nLinha);
         }
+        // else if(comando.size()==2){
+
+        // }
         if(comando.size()!=3 || comando[1]!="space"){
-            cout<<"aqui chega"<<endl;
+            // cout<<"aqui chega"<<endl;
             nLinha++;
         }
         i++;
@@ -176,9 +260,9 @@ void passo2(string fileName,string targetName){
         comando = separaLinha(linha);
         string addr;
         if(comando.size()==2){
-            cout<<"simbolo:"<<comando[1]<<endl;
+            // cout<<"simbolo:"<<comando[1]<<endl;
             opAddr=rastreiaSimbolo(comando[1]);
-            cout<<"op addr:"<<opAddr<<endl;
+            // cout<<"op addr:"<<opAddr<<endl;
             if(opAddr==-1 && comando[0].substr(0,1)!="j"){
                 cout<<"ERROR: uso de variavel nao declarada"<<comando[1]<<endl;
                 return;
