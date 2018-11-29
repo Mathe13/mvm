@@ -28,8 +28,23 @@ int main(int argc, char *argv[])
     }
     if (argc >= 3)
     {
-        arquivoSaida = argv[2];
+        tabelas tmp;
+        vector<tabelas> progs;
+        for (int i = 1; i < argc; i++)
+        {
+            tmp = passo1(argv[i]);
+            progs.push_back(tmp);
+        }
+        for (int i = 0; i < progs.size(); i++)
+        {
+            cout << "tabela:" << i << endl;
+            mostra_tabelas(progs[i]);
+        }
     }
-    tabelas tabelas = passo1(argv[1]);
-    mostra_tabelas(tabelas);
+    if (argc == 2)
+    {
+        tabelas tabelas = passo1(argv[1]);
+        mostra_tabelas(tabelas);
+        passo2(argv[1], arquivoSaida, tabelas);
+    }
 }
