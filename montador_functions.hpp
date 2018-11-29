@@ -11,32 +11,37 @@ typedef struct simbolo
     int addr;
     string nome;
 } simbolo;
-vector<simbolo> tabela_simbolos;
 
 typedef struct label
 {
     int addr;
     string nome;
 } label;
-vector<label> tabela_labels;
 
 typedef struct global
 {
     int addr;
     string nome;
 } global;
-vector<global> tabela_global;
 
 typedef struct externa
 {
     string nome;
 } externa;
-vector<externa> tabela_extern;
+
+typedef struct tabelas
+{
+    //tabelas
+    vector<externa> tabela_extern;
+    vector<global> tabela_global;
+    vector<label> tabela_labels;
+    vector<simbolo> tabela_simbolos;
+} tabelas;
 
 vector<string> separaLinha(string linha);
 int rastreiaSimbolo(string nome_simbolo);
 int rastreiaLabel(string nome_label);
-void passo1(string fileName);
+tabelas passo1(string fileName);
 void passo2(string fileName, string targetName);
 int rastreiaGlobal(string nome_global);
 int rastreiaExterno(string nome_global);
@@ -65,7 +70,7 @@ vector<string> separaLinha(string linha)
     return resultArray;
 }
 
-int rastreiaSimbolo(string nome_simbolo)
+int rastreiaSimbolo(string nome_simbolo, vector<simbolo> tabela_simbolos)
 {
     for (int i = 0; i < tabela_simbolos.size(); i++)
     {
@@ -77,7 +82,7 @@ int rastreiaSimbolo(string nome_simbolo)
     return -1;
 }
 
-int rastreiaLabel(string nome_label)
+int rastreiaLabel(string nome_label, vector<label> tabela_labels)
 {
     for (int i = 0; i < tabela_labels.size(); i++)
     {
@@ -89,7 +94,7 @@ int rastreiaLabel(string nome_label)
     return -1;
 }
 
-int rastreiaGlobal(string nome_global)
+int rastreiaGlobal(string nome_global, vector<global> tabela_global)
 {
     for (int i = 0; i < tabela_global.size(); i++)
     {
@@ -101,7 +106,7 @@ int rastreiaGlobal(string nome_global)
     return -1;
 }
 
-int rastreiaExterno(string nome_extern)
+int rastreiaExterno(string nome_extern, vector<externa> tabela_extern)
 {
     for (int i = 0; i < tabela_extern.size(); i++)
     {
@@ -113,12 +118,12 @@ int rastreiaExterno(string nome_extern)
     return -1;
 }
 
-void declaraLabel(vector<string> comando, int nLinha)
+void declaraLabel(vector<string> comando, int nLinha, vector<label> &tabela_labels)
 {
     // cout<<<<endl;
     string labelName;
     labelName = comando[0].substr(0, comando[0].size() - 1);
-    int a = rastreiaLabel(labelName);
+    int a = rastreiaLabel(labelName, tabela_labels);
     label tmp;
     if (a != -1)
     {
@@ -132,11 +137,12 @@ void declaraLabel(vector<string> comando, int nLinha)
         cout << "adicionando label:" << labelName << endl;
     }
 }
-void declaraExtern(vector<string> comando, externa tmp)
+
+void declaraExtern(vector<string> comando, externa tmp, vector<externa> &tabela_extern)
 {
     if (comando[1] == "EXTERN")
     {
-        if (rastreiaExterno(comando[0]) == -1)
+        if (rastreiaExterno(comando[0], tabela_extern) == -1)
         {
             if (stoi(comando[2]) > 1)
             {
@@ -164,11 +170,12 @@ void declaraExtern(vector<string> comando, externa tmp)
         }
     }
 }
-void declaraGlobal(vector<string> comando, global tmp)
+
+void declaraGlobal(vector<string> comando, global tmp, vector<global> &tabela_global)
 {
     if (comando[1] == "GLOBAL")
     {
-        if (rastreiaGlobal(comando[0]) == -1)
+        if (rastreiaGlobal(comando[0], tabela_global) == -1)
         {
             if (stoi(comando[2]) > 1)
             {
@@ -196,11 +203,12 @@ void declaraGlobal(vector<string> comando, global tmp)
         }
     }
 }
-void declaraVariavel(vector<string> comando, simbolo tmp, int pos)
+
+void declaraVariavel(vector<string> comando, simbolo tmp, int pos, vector<simbolo> &tabela_simbolos)
 {
     if (comando[1] == "space")
     {
-        if (rastreiaSimbolo(comando[0]) == -1)
+        if (rastreiaSimbolo(comando[0], tabela_simbolos) == -1)
         {
             if (stoi(comando[2]) > 1)
             {
@@ -232,8 +240,9 @@ void declaraVariavel(vector<string> comando, simbolo tmp, int pos)
     }
 }
 
-void passo1(string fileName)
+tabelas passo1(string fileName)
 {
+    tabelas tabelas;
     string linha;
     int pos = 0, i = 0;
     // int posEx=0,posG=0; //extern e global
@@ -251,22 +260,22 @@ void passo1(string fileName)
             if (comando[1] == "GLOBAL")
             {
                 global tmp;
-                declaraGlobal(comando, tmp);
+                declaraGlobal(comando, tmp, tabelas.tabela_global);
             }
             else if (comando[1] == "EXTERN")
             {
                 externa tmp;
-                declaraExtern(comando, tmp);
+                declaraExtern(comando, tmp, tabelas.tabela_extern);
             }
             else if (comando[1] == "space")
             {
-                declaraVariavel(comando, tmp, pos);
+                declaraVariavel(comando, tmp, pos, tabelas.tabela_simbolos);
             }
         }
         else if ((comando.size() == 1) &&
                  (comando[0].substr(comando[0].size() - 1, comando[0].size()) == ":"))
         {
-            declaraLabel(comando, nLinha);
+            declaraLabel(comando, nLinha, tabelas.tabela_labels);
         }
         if (comando.size() != 3 || comando[1] != "space")
         {
@@ -274,16 +283,17 @@ void passo1(string fileName)
         }
         i++;
     }
+    return tabelas;
 }
 
-void passo2(string fileName, string targetName)
+void passo2(string fileName, string targetName, tabelas tabelas)
 {
     ifstream leitor(fileName);
     ofstream escritor(targetName);
     string linha;
     vector<string> comando;
-    escritor << "99 " << to_string(tabela_simbolos.size()) << endl;
-    for (int i = 0; i < tabela_simbolos.size(); i++)
+    escritor << "99 " << to_string(tabelas.tabela_simbolos.size()) << endl;
+    for (int i = 0; i < tabelas.tabela_simbolos.size(); i++)
     {
         escritor << "00 00" << endl;
     }
@@ -295,7 +305,7 @@ void passo2(string fileName, string targetName)
         string addr;
         if (comando.size() == 2)
         {
-            opAddr = rastreiaSimbolo(comando[1]);
+            opAddr = rastreiaSimbolo(comando[1], tabelas.tabela_simbolos);
             // opAddrE=rastreiaExterno(comando[1]);
             // opAddrG=rastreiaGlobal(comando[1]);
             if (opAddr == -1 && comando[0].substr(0, 1) != "j")
@@ -303,7 +313,7 @@ void passo2(string fileName, string targetName)
                 cout << "ERROR: uso de variavel nao declarada" << comando[1] << endl;
                 return;
             }
-            addr = to_string((tabela_simbolos[opAddr].addr) + 1);
+            addr = to_string((tabelas.tabela_simbolos[opAddr].addr) + 1);
             if (comando[0] == "push")
             {
                 cout << "comando push" << endl;
@@ -315,7 +325,7 @@ void passo2(string fileName, string targetName)
             }
             else if (comando[0] == "jmp")
             {
-                int a = rastreiaLabel(comando[1]);
+                int a = rastreiaLabel(comando[1], tabelas.tabela_labels);
                 if (a == -1)
                 {
                     cout << "label " << comando[1] << " não declarada" << endl;
@@ -323,12 +333,12 @@ void passo2(string fileName, string targetName)
                 }
                 else
                 {
-                    escritor << "06 " << tabela_labels[a].addr << endl;
+                    escritor << "06 " << tabelas.tabela_labels[a].addr << endl;
                 }
             }
             else if (comando[0] == "jeq")
             {
-                int a = rastreiaLabel(comando[1]);
+                int a = rastreiaLabel(comando[1], tabelas.tabela_labels);
                 if (a == -1)
                 {
                     cout << "label " << comando[1] << " não declarada" << endl;
@@ -336,12 +346,12 @@ void passo2(string fileName, string targetName)
                 }
                 else
                 {
-                    escritor << "07 " << tabela_labels[a].addr << endl;
+                    escritor << "07 " << tabelas.tabela_labels[a].addr << endl;
                 }
             }
             else if (comando[0] == "jgt")
             {
-                int a = rastreiaLabel(comando[1]);
+                int a = rastreiaLabel(comando[1], tabelas.tabela_labels);
                 if (a == -1)
                 {
                     cout << "label " << comando[1] << " não declarada" << endl;
@@ -349,12 +359,12 @@ void passo2(string fileName, string targetName)
                 }
                 else
                 {
-                    escritor << "08 " << tabela_labels[a].addr << endl;
+                    escritor << "08 " << tabelas.tabela_labels[a].addr << endl;
                 }
             }
             else if (comando[0] == "jlt")
             {
-                int a = rastreiaLabel(comando[1]);
+                int a = rastreiaLabel(comando[1], tabelas.tabela_labels);
                 if (a == -1)
                 {
                     cout << "label " << comando[1] << " não declarada" << endl;
@@ -362,7 +372,7 @@ void passo2(string fileName, string targetName)
                 }
                 else
                 {
-                    escritor << "09 " << tabela_labels[a].addr << endl;
+                    escritor << "09 " << tabelas.tabela_labels[a].addr << endl;
                 }
             }
             else if (comando[0] == "in")
