@@ -1,21 +1,21 @@
 #include <montador_functions.hpp>
 
-void mostra_tabelas()
+void mostra_tabelas(tabelas tabelas)
 {
     cout << "variaveis" << endl;
-    for (int i = 0; i < tabela_simbolos.size(); i++)
+    for (int i = 0; i < tabelas.tabela_simbolos.size(); i++)
     {
-        cout << "addr:" << tabela_simbolos[i].addr << " nome:" << tabela_simbolos[i].nome << endl;
+        cout << "addr:" << tabelas.tabela_simbolos[i].addr << " nome:" << tabelas.tabela_simbolos[i].nome << endl;
     }
     cout << "externas" << endl;
-    for (int i = 0; i < tabela_extern.size(); i++)
+    for (int i = 0; i < tabelas.tabela_extern.size(); i++)
     {
-        cout << "nome:" << tabela_extern[i].nome << endl;
+        cout << "nome:" << tabelas.tabela_extern[i].nome << endl;
     }
     cout << "globais" << endl;
-    for (int i = 0; i < tabela_global.size(); i++)
+    for (int i = 0; i < tabelas.tabela_global.size(); i++)
     {
-        cout << "nome:" << tabela_global[i].nome << endl;
+        cout << "nome:" << tabelas.tabela_global[i].nome << endl;
     }
 }
 int main(int argc, char *argv[])
@@ -30,6 +30,6 @@ int main(int argc, char *argv[])
     {
         arquivoSaida = argv[2];
     }
-    passo1(argv[1]);
-    mostra_tabelas();
+    tabelas tabelas = passo1(argv[1]);
+    mostra_tabelas(tabelas);
 }
