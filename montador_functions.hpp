@@ -204,7 +204,7 @@ void declaraGlobal(vector<string> comando, global tmp, vector<global> &tabela_gl
     }
 }
 
-void declaraVariavel(vector<string> comando, simbolo tmp, int pos, vector<simbolo> &tabela_simbolos)
+void declaraVariavel(vector<string> comando, simbolo tmp, int &pos, vector<simbolo> &tabela_simbolos)
 {
     if (comando[1] == "space")
     {
@@ -292,7 +292,8 @@ void passo2(string fileName, string targetName, tabelas tabelas)
     ofstream escritor(targetName);
     string linha;
     vector<string> comando;
-    escritor << "99 " << to_string(tabelas.tabela_simbolos.size()) << endl;
+    cout << "vou definir cs como:" << tabelas.tabela_simbolos.size() << endl;
+    escritor << "99 " << to_string(tabelas.tabela_simbolos.size() - 1) << endl;
     for (int i = 0; i < tabelas.tabela_simbolos.size(); i++)
     {
         escritor << "00 00" << endl;
@@ -301,13 +302,12 @@ void passo2(string fileName, string targetName, tabelas tabelas)
     {
         int opAddr;
         getline(leitor, linha);
+        cout << "li:" << linha << endl;
         comando = separaLinha(linha);
         string addr;
         if (comando.size() == 2)
         {
             opAddr = rastreiaSimbolo(comando[1], tabelas.tabela_simbolos);
-            // opAddrE=rastreiaExterno(comando[1]);
-            // opAddrG=rastreiaGlobal(comando[1]);
             if (opAddr == -1 && comando[0].substr(0, 1) != "j")
             {
                 cout << "ERROR: uso de variavel nao declarada" << comando[1] << endl;
@@ -333,6 +333,7 @@ void passo2(string fileName, string targetName, tabelas tabelas)
                 }
                 else
                 {
+                    cout << "vou escrever jmp para " << tabelas.tabela_labels[a].addr << endl;
                     escritor << "06 " << tabelas.tabela_labels[a].addr << endl;
                 }
             }
