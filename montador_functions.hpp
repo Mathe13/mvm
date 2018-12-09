@@ -275,7 +275,7 @@ tabelas passo1(string fileName)
         else if ((comando.size() == 1) &&
                  (comando[0].substr(comando[0].size() - 1, comando[0].size()) == ":"))
         {
-            declaraLabel(comando, nLinha, tabelas.tabela_labels);
+            declaraLabel(comando, nLinha - 1, tabelas.tabela_labels);
         }
         if (comando.size() != 3 || comando[1] != "space")
         {
@@ -316,7 +316,7 @@ void passo2(string fileName, string targetName, tabelas tabelas)
             addr = to_string((tabelas.tabela_simbolos[opAddr].addr) + 1);
             if (comando[0] == "push")
             {
-                cout << "comando push" << endl;
+                cout << "comando push" << addr << endl;
                 escritor << "00 " << addr << endl;
             }
             else if (comando[0] == "store")
@@ -334,7 +334,7 @@ void passo2(string fileName, string targetName, tabelas tabelas)
                 else
                 {
                     cout << "vou escrever jmp para " << tabelas.tabela_labels[a].addr << endl;
-                    escritor << "06 " << tabelas.tabela_labels[a].addr << endl;
+                    escritor << "06 " << (tabelas.tabela_labels[a].addr) << endl;
                 }
             }
             else if (comando[0] == "jeq")

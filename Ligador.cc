@@ -72,11 +72,12 @@ int main(int argc, char *argv[])
         cout << "Digite o nome de um arquivo texto para monta-lo" << endl;
         return 0;
     }
-    if (argc >= 3)
+    if ((argc - 1) >= 3)
+        cout << "aqui" << endl;
     {
         tabelas tmp;
         vector<tabelas> progs;
-        for (int i = 1; i < argc; i++)
+        for (int i = 1; i < argc - 1; i++)
         {
             tmp = passo1(argv[i]);
             progs.push_back(tmp);
@@ -127,7 +128,32 @@ int main(int argc, char *argv[])
             }
         }
         cout << "tabela_mestre" << endl;
+        // remove("saida");
         mostra_tabelas(tabela_mestre);
+        ofstream escrita;
+        ifstream leitura;
+        string linha;
+        escrita.open("tmp");
+        cout << "gerando intermediario" << endl;
+        for (int i = 1; i < argc - 1; i++)
+        {
+
+            cout << "abrindo " << argv[i] << endl;
+            leitura.open(argv[i]);
+            while (!leitura.eof())
+            {
+                getline(leitura, linha);
+                if (!(linha == " "))
+                {
+                    escrita << linha << endl;
+                }
+            }
+            leitura.close();
+        }
+        tabelas tmpL;
+        tmpL = passo1("tmp");
+        tabela_mestre.tabela_labels = tmpL.tabela_labels;
+        passo2("tmp", argv[(argc - 1)], tabela_mestre);
     }
     if (argc == 2)
     {
