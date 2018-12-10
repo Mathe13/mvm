@@ -154,6 +154,7 @@ int main(int argc, char *argv[])
         tmpL = passo1("tmp");
         tabela_mestre.tabela_labels = tmpL.tabela_labels;
         passo2("tmp", argv[(argc - 1)], tabela_mestre);
+        remove("tmp");
     }
     if (argc == 2)
     {
